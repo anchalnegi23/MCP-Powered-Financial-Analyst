@@ -1,0 +1,211 @@
+# Full stack: five MCP servers, the API, the UI, PostgreSQL and Redis.
+#
+# The MCP servers run as HTTP services here rather than stdio subprocesses, so each is a
+# separately observable, separately restartable container — which is the argument for
+# separate MCP servers made concrete.
+#
+# No secret appears in this file. Everything comes from .env (see .env.example).
+
+x-app: &app
+  build:
+    context: .
+    dockerfile: Dockerfile
+  image: financial-analyst-mcp:latest
+  restart: unless-stopped
+  env_file: [.env]
+
+x-mcp-env: &mcp-env
+  MCP_TRANSPORT: http
+  MCP_HOST: 0.0.0.0
+  LOG_LEVEL: ${LOG_LEVEL:-INFO}
+
+# A bare GET /mcp returns 400 ("missing session ID"), so it cannot distinguish a healthy
+# server from a broken one. This performs a real MCP `initialize` handshake instead: it
+# passes only if the server is actually speaking the protocol.
+x-mcp-healthcheck: &mcp-healthcheck
+  interval: 10s
+  timeout: 5s
+  retries: 5
+  start_period: 20s
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-analyst}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
+      POSTGRES_DB: ${POSTGRES_DB:-financial_analyst}
+    ports:
+      # Host port is configurable: 5432 is often already taken by a local Postgres.
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-analyst}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  calculator-mcp:
+    <<: *app
+    command: ["python", "-m", "servers.calculator_mcp.server"]
+    environment:
+      <<: *mcp-env
+      MCP_PORT: 8001
+    ports: ["${CALCULATOR_MCP_PORT:-8001}:8001"]
+    healthcheck:
+      <<: *mcp-healthcheck
+      test:
+        - CMD-SHELL
+        - >-
+          curl -fsS -o /dev/null -X POST http://localhost:8001/mcp
+          -H 'Content-Type: application/json'
+          -H 'Accept: application/json, text/event-stream'
+          -d '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-06-18","capabilities":{},"clientInfo":{"name":"healthcheck","version":"1"}}}'
+      start_period: 20s
+
+  market-mcp:
+    <<: *app
+    command: ["python", "-m", "servers.market_mcp.server"]
+    environment:
+      <<: *mcp-env
+      MCP_PORT: 8002
+    ports: ["${MARKET_MCP_PORT:-8002}:8002"]
+    healthcheck:
+      <<: *mcp-healthcheck
+      test:
+        - CMD-SHELL
+        - >-
+          curl -fsS -o /dev/null -X POST http://localhost:8002/mcp
+          -H 'Content-Type: application/json'
+          -H 'Accept: application/json, text/event-stream'
+          -d '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-06-18","capabilities":{},"clientInfo":{"name":"healthcheck","version":"1"}}}'
+      start_period: 20s
+
+  financial-mcp:
+    <<: *app
+    command: ["python", "-m", "servers.financial_mcp.server"]
+    environment:
+      <<: *mcp-env
+      MCP_PORT: 8003
+    ports: ["${FINANCIAL_MCP_PORT:-8003}:8003"]
+    healthcheck:
+      <<: *mcp-healthcheck
+      test:
+        - CMD-SHELL
+        - >-
+          curl -fsS -o /dev/null -X POST http://localhost:8003/mcp
+          -H 'Content-Type: application/json'
+          -H 'Accept: application/json, text/event-stream'
+          -d '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-06-18","capabilities":{},"clientInfo":{"name":"healthcheck","version":"1"}}}'
+      start_period: 20s
+
+  news-mcp:
+    <<: *app
+    command: ["python", "-m", "servers.news_mcp.server"]
+    environment:
+      <<: *mcp-env
+      MCP_PORT: 8004
+    ports: ["${NEWS_MCP_PORT:-8004}:8004"]
+    healthcheck:
+      <<: *mcp-healthcheck
+      test:
+        - CMD-SHELL
+        - >-
+          curl -fsS -o /dev/null -X POST http://localhost:8004/mcp
+          -H 'Content-Type: application/json'
+          -H 'Accept: application/json, text/event-stream'
+          -d '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-06-18","capabilities":{},"clientInfo":{"name":"healthcheck","version":"1"}}}'
+      start_period: 20s
+
+  research-mcp:
+    <<: *app
+    command: ["python", "-m", "servers.research_mcp.server"]
+    environment:
+      <<: *mcp-env
+      MCP_PORT: 8005
+      CHROMA_PERSIST_DIR: /app/data/chroma
+    volumes:
+      - chromadata:/app/data/chroma
+    ports: ["${RESEARCH_MCP_PORT:-8005}:8005"]
+    healthcheck:
+      <<: *mcp-healthcheck
+      test:
+        - CMD-SHELL
+        - >-
+          curl -fsS -o /dev/null -X POST http://localhost:8005/mcp
+          -H 'Content-Type: application/json'
+          -H 'Accept: application/json, text/event-stream'
+          -d '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-06-18","capabilities":{},"clientInfo":{"name":"healthcheck","version":"1"}}}'
+      start_period: 60s
+
+  api:
+    <<: *app
+    command:
+      ["uvicorn", "api.main:app", "--host", "0.0.0.0", "--port", "8000"]
+    environment:
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      DATABASE_URL: postgresql://${POSTGRES_USER:-analyst}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-financial_analyst}
+      REDIS_URL: redis://redis:6379/0
+      # No CHROMA_PERSIST_DIR here: the API never touches the vector store directly, it
+      # reaches documents through the research MCP server. That is the layering working.
+      # These switch the MCP client from spawning stdio subprocesses to talking to the
+      # five MCP containers over HTTP. Unset them and the identical image runs the
+      # servers in-process instead.
+      CALCULATOR_MCP_URL: http://calculator-mcp:8001/mcp
+      MARKET_MCP_URL: http://market-mcp:8002/mcp
+      FINANCIAL_MCP_URL: http://financial-mcp:8003/mcp
+      NEWS_MCP_URL: http://news-mcp:8004/mcp
+      RESEARCH_MCP_URL: http://research-mcp:8005/mcp
+    ports: ["${API_PORT:-8000}:8000"]
+    depends_on:
+      postgres: {condition: service_healthy}
+      redis: {condition: service_healthy}
+      calculator-mcp: {condition: service_healthy}
+      market-mcp: {condition: service_healthy}
+      financial-mcp: {condition: service_healthy}
+      news-mcp: {condition: service_healthy}
+      research-mcp: {condition: service_healthy}
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "-o", "/dev/null", "http://localhost:8000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 40s
+
+  ui:
+    <<: *app
+    command:
+      - streamlit
+      - run
+      - frontend/app.py
+      - --server.port=8501
+      - --server.address=0.0.0.0
+      - --server.headless=true
+    environment:
+      API_BASE_URL: http://api:8000
+    ports: ["${UI_PORT:-8501}:8501"]
+    depends_on:
+      api: {condition: service_healthy}
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "-o", "/dev/null", "http://localhost:8501/_stcore/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+volumes:
+  pgdata:
+  chromadata:

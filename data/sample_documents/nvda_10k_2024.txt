@@ -1,0 +1,45 @@
+NVIDIA CORPORATION — FORM 10-K, FISCAL YEAR 2024 (EXTRACT)
+
+ITEM 1A. RISK FACTORS
+
+Dependence on a limited number of suppliers and manufacturing partners.
+We depend on foundries, memory suppliers and assembly and test partners to manufacture,
+assemble, test and package our products. We do not own or operate wafer fabrication
+facilities. A substantial majority of our advanced process wafers are manufactured by a
+single foundry partner, and interruption of that supply, whether from capacity
+constraints, natural disaster, or geopolitical disruption affecting Taiwan, would
+materially harm our ability to deliver products and would reduce revenue.
+
+Customer concentration.
+Our revenue is concentrated among a small number of customers. Sales to a limited group
+of large cloud service providers and system integrators account for a significant portion
+of Data Center revenue. The loss of any such customer, a reduction in their capital
+spending on accelerated computing infrastructure, or a decision by them to design and
+deploy their own accelerators, would materially reduce our revenue.
+
+Export controls and geopolitical risk.
+Regulations issued by the U.S. government restrict the export of certain of our advanced
+computing products to China and other markets. These controls have reduced our revenue in
+affected regions and required us to develop alternative products. Further restrictions,
+retaliatory measures, or licensing requirements could reduce demand, increase costs, and
+harm our competitive position in a large market.
+
+Competition.
+The market for accelerated computing is intensely competitive. We compete with suppliers
+of discrete and integrated GPUs, with vendors of custom accelerators including ASICs
+developed internally by large cloud providers, and with emerging architectures. Some
+competitors have greater financial resources or captive demand.
+
+Demand volatility and inventory risk.
+Demand for our products has been volatile. We place non-cancellable orders and prepay for
+capacity well in advance of revenue. If demand falls short of expectations, we may hold
+excess inventory or incur supply commitment charges, which would reduce gross margin.
+
+ITEM 7. MANAGEMENT'S DISCUSSION AND ANALYSIS
+
+Revenue for fiscal year 2024 was $60,922 million, up 126% from $26,974 million in fiscal
+year 2023. The increase was driven by Data Center revenue growth reflecting strong demand
+for accelerated computing platforms used to train and deploy generative AI models.
+Gross margin increased to 72.7% from 56.9%, reflecting a favourable product mix weighted
+towards Data Center compute and lower inventory provisions than the prior year.
+Operating expenses increased 2% as we continued to invest in engineering headcount.

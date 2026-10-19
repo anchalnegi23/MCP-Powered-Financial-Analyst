@@ -1,0 +1,31 @@
+ADVANCED MICRO DEVICES, INC. — FORM 10-K, FISCAL YEAR 2024 (EXTRACT)
+
+ITEM 1A. RISK FACTORS
+
+Reliance on third-party foundries.
+We rely on third-party foundry partners to manufacture our products and do not operate
+our own fabrication facilities. Capacity constraints, yield problems or price increases
+at these partners would impair our ability to supply products and would compress margins.
+
+Intense competition in a consolidating market.
+We compete against companies with substantially greater financial resources, larger
+research and development budgets and established customer relationships in both the
+client computing and data centre markets. Aggressive pricing by competitors has in the
+past reduced our margins and could do so again.
+
+Dependence on the personal computer market.
+A meaningful portion of our revenue derives from the personal computer market, which has
+experienced cyclical and structural decline. Weakness in consumer and commercial PC
+demand reduces shipments of our client processors and graphics products.
+
+Execution risk in data centre and AI accelerators.
+Our data centre growth depends on timely delivery of competitive accelerator products and
+on the maturity of our software ecosystem. Delays in product qualification, or customer
+preference for a more established software stack, would slow adoption.
+
+ITEM 7. MANAGEMENT'S DISCUSSION AND ANALYSIS
+
+Revenue for fiscal year 2024 was $25,785 million, an increase of 14% from $22,680 million
+in fiscal year 2023. Data Center segment revenue grew substantially, offset by a decline
+in the Gaming segment. Gross margin was 49%, and operating expenses rose as we increased
+investment in artificial intelligence software and hardware engineering.
